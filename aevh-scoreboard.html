@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placar de Pontuação - AE Verde Horizonte</title>
+  <!-- Importação da fonte Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #212121;
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .widget-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+      max-width: 1200px;
+      width: 100%;
+    }
+    
+    /* Grelha das Equipas */
+    .teams-grid {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: stretch;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .team-card {
+      background: #f8fafc;
+      border: 3px solid #00e676;
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      flex: 1;
+      min-width: 240px;
+      max-width: 320px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .team-card:hover {
+      box-shadow: 0 8px 24px rgba(0, 230, 118, 0.2);
+    }
+
+    /* Nome da Equipa editável */
+    .team-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1e293b;
+      border: none;
+      background: transparent;
+      text-align: center;
+      width: 100%;
+      font-family: 'Lexend', sans-serif;
+      outline: none;
+      border-bottom: 2px dashed #cbd5e1;
+      padding-bottom: 4px;
+    }
+
+    .team-name:focus {
+      border-bottom-color: #00e676;
+      color: #00a854;
+    }
+
+    /* Pontuação Gigante */
+    .score-display {
+      font-size: clamp(4rem, 10vw, 7rem);
+      font-weight: 800;
+      color: #00e676;
+      line-height: 1;
+      user-select: none;
+      text-shadow: 0 2px 10px rgba(0, 230, 118, 0.2);
+      margin: 10px 0;
+    }
+
+    /* Botões de Ajuste de Pontos */
+    .score-controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-score {
+      flex: 1;
+      background: #ffffff;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-score:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .btn-score.minus {
+      border-color: #cbd5e1;
+      color: #64748b;
+    }
+
+    .btn-score.minus:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Gestão Geral */
+    .global-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .btn-global {
+      background: #f0fdf4;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-global:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+    }
+
+    .btn-global.reset {
+      background: #fff1f2;
+      color: #e11d48;
+      border-color: #fda4af;
+    }
+
+    .btn-global.reset:hover {
+      background: #e11d48;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    
+    <!-- Contentor das Equipas -->
+    <div class="teams-grid" id="teamsContainer"></div>
+
+    <!-- Controlos Globais do Placar -->
+    <div class="global-controls">
+      <button class="btn-global" onclick="addTeam()">+ ADICIONAR EQUIPA</button>
+      <button class="btn-global" onclick="removeTeam()">- REMOVER EQUIPA</button>
+      <button class="btn-global reset" onclick="resetAllScores()">ZERAR PONTOS</button>
+    </div>
+
+  </div>
+
+  <script>
+    // Estado inicial com 3 equipas de predefinição
+    let teams = [
+      { name: "Equipa Alfa", score: 0 },
+      { name: "Equipa Beta", score: 0 },
+      { name: "Equipa Gama", score: 0 }
+    ];
+
+    const container = document.getElementById('teamsContainer');
+
+    function renderTeams() {
+      container.innerHTML = '';
+      teams.forEach((team, index) => {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+          <input type="text" class="team-name" value="${team.name}" onchange="updateName(${index}, this.value)">
+          <div class="score-display">${team.score}</div>
+          <div class="score-controls">
+            <button class="btn-score minus" onclick="changeScore(${index}, -1)">-1</button>
+            <button class="btn-score" onclick="changeScore(${index}, 1)">+1</button>
+            <button class="btn-score" onclick="changeScore(${index}, 5)">+5</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function changeScore(index, delta) {
+      teams[index].score = Math.max(0, teams[index].score + delta);
+      renderTeams();
+    }
+
+    function updateName(index, newName) {
+      teams[index].name = newName || `Equipa ${index + 1}`;
+    }
+
+    function addTeam() {
+      if (teams.length >= 6) return; // Limite para caber sem esmagar no projetor
+      const teamLetters = ["Alfa", "Beta", "Gama", "Delta", "Épsilon", "Zeta"];
+      const nextName = `Equipa ${teamLetters[teams.length] || (teams.length + 1)}`;
+      teams.push({ name: nextName, score: 0 });
+      renderTeams();
+    }
+
+    function removeTeam() {
+      if (teams.length <= 1) return;
+      teams.pop();
+      renderTeams();
+    }
+
+    function resetAllScores() {
+      teams.forEach(t => t.score = 0);
+      renderTeams();
+    }
+
+    // Inicializa a interface
+    renderTeams();
+  </script>
+</body>
+</html>

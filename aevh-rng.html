@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Números - AE Verde Horizonte</title>
+  <!-- Importação da fonte Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #00e676; /* Verde néon */
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      padding: 20px;
+    }
+    .widget-container {
+      text-align: center;
+      width: 100%;
+      max-width: 900px;
+    }
+    .number-display {
+      font-size: clamp(6rem, 22vw, 18rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      margin-bottom: 30px;
+      user-select: none;
+      text-shadow: 0 4px 20px rgba(0, 230, 118, 0.15);
+      min-height: 1.1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .inputs-container {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      color: #2e7d32;
+      font-weight: 600;
+    }
+    input[type="number"] {
+      width: 90px;
+      padding: 8px 12px;
+      border: 2px solid #00e676;
+      border-radius: 8px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #00a854;
+      background: #f0fdf4;
+      text-align: center;
+      outline: none;
+    }
+    input[type="number"]:focus {
+      border-color: #00a854;
+      box-shadow: 0 0 8px rgba(0, 230, 118, 0.4);
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #f0fdf4;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 12px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    button:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .presets {
+      margin-top: 20px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-preset {
+      background: transparent;
+      border: 1px solid #c8e6c9;
+      color: #4caf50;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+    .btn-preset:hover {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border-color: #81c784;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    <!-- Ecrã com o número gerado -->
+    <div class="number-display" id="display">?</div>
+
+    <!-- Limites Mínimo e Máximo -->
+    <div class="inputs-container">
+      <div class="input-group">
+        <label for="minVal">Mín:</label>
+        <input type="number" id="minVal" value="1">
+      </div>
+      <div class="input-group">
+        <label for="maxVal">Máx:</label>
+        <input type="number" id="maxVal" value="30">
+      </div>
+    </div>
+
+    <!-- Botão Principal de Ação -->
+    <div class="controls">
+      <button onclick="generateRandom()">GERAR NÚMERO</button>
+    </div>
+
+    <!-- Atalhos Rápidos para a Turma/Aulas de Matemática -->
+    <div class="presets">
+      <button class="btn-preset" onclick="setRange(1, 20)">1 a 20</button>
+      <button class="btn-preset" onclick="setRange(1, 28)">1 a 28 (Turma)</button>
+      <button class="btn-preset" onclick="setRange(1, 30)">1 a 30</button>
+      <button class="btn-preset" onclick="setRange(1, 100)">1 a 100</button>
+      <button class="btn-preset" onclick="setRange(1, 6)">Dado (1-6)</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const minInput = document.getElementById('minVal');
+    const maxInput = document.getElementById('maxVal');
+
+    // Suporte para parâmetros no URL (ex: gerador.html?min=1&max=28)
+    function initFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const minParam = urlParams.get('min');
+      const maxParam = urlParams.get('max');
+
+      if (minParam !== null) minInput.value = parseInt(minParam, 10);
+      if (maxParam !== null) maxInput.value = parseInt(maxParam, 10);
+    }
+
+    function generateRandom() {
+      const min = parseInt(minInput.value, 10);
+      const max = parseInt(maxInput.value, 10);
+
+      if (isNaN(min) || isNaN(max) || min > max) {
+        display.textContent = 'ERR';
+        display.style.color = '#ff1744';
+        return;
+      }
+
+      display.style.color = '#00e676';
+      
+      // Efeito de "roleta" rápido para dar dinamismo no projetor
+      let iterations = 0;
+      const interval = setInterval(() => {
+        const randTemp = Math.floor(Math.random() * (max - min + 1)) + min;
+        display.textContent = randTemp;
+        iterations++;
+        
+        if (iterations > 10) {
+          clearInterval(interval);
+          const finalNum = Math.floor(Math.random() * (max - min + 1)) + min;
+          display.textContent = finalNum;
+        }
+      }, 40);
+    }
+
+    function setRange(min, max) {
+      minInput.value = min;
+      maxInput.value = max;
+      display.textContent = '?';
+      display.style.color = '#00e676';
+    }
+
+    initFromURL();
+  </script>
+</body>
+</html>

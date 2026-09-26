@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semáforo de Ruído - AE Verde Horizonte</title>
+  <!-- Importação da fonte Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #212121;
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .widget-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+      max-width: 800px;
+      width: 100%;
+    }
+    
+    /* Estrutura do Semáforo */
+    .traffic-light {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border: 4px solid #0f172a;
+    }
+    .light {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background-color: #334155;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.6);
+      opacity: 0.25;
+    }
+
+    /* Luzes Ativas */
+    .light.red.active {
+      background-color: #ff1744;
+      opacity: 1;
+      box-shadow: 0 0 40px #ff1744, inset 0 2px 4px rgba(255,255,255,0.6);
+    }
+    .light.yellow.active {
+      background-color: #ffca28;
+      opacity: 1;
+      box-shadow: 0 0 40px #ffca28, inset 0 2px 4px rgba(255,255,255,0.6);
+    }
+    .light.green.active {
+      background-color: #00e676;
+      opacity: 1;
+      box-shadow: 0 0 40px #00e676, inset 0 2px 4px rgba(255,255,255,0.6);
+    }
+
+    /* Leitura de Decibéis */
+    .decibel-display {
+      font-size: 4rem;
+      font-weight: 800;
+      color: #0f172a;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .decibel-unit {
+      font-size: 1.8rem;
+      color: #64748b;
+    }
+
+    /* Painel de Controlo */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 400px;
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      justify-content: space-between;
+    }
+    input[type="range"] {
+      accent-color: #00e676;
+      cursor: pointer;
+    }
+    button {
+      background: #f0fdf4;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    button:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+    }
+    button.stop {
+      background: #fff1f2;
+      color: #e11d48;
+      border-color: #fda4af;
+    }
+    button.stop:hover {
+      background: #e11d48;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    
+    <!-- Estrutura do Semáforo -->
+    <div class="traffic-light">
+      <div class="light red" id="lightRed"></div>
+      <div class="light yellow" id="lightYellow"></div>
+      <div class="light green" id="lightGreen"></div>
+    </div>
+
+    <!-- Leitura Digital de dB -->
+    <div class="decibel-display">
+      <span id="dbValue">--</span> <span class="decibel-unit">dB</span>
+    </div>
+
+    <!-- Painel de Ajustes -->
+    <div class="controls">
+      <button id="startBtn" onclick="toggleMic()">ATIVAR MICROFONE</button>
+
+      <div class="control-group">
+        <label for="thresholdInput">
+          <span>Limite Crítico (Vermelho):</span>
+          <span id="thresholdVal">45 dB</span>
+        </label>
+        <input type="range" id="thresholdInput" min="30" max="90" value="45" oninput="updateThreshold(this.value)">
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let audioContext;
+    let analyser;
+    let microphone;
+    let isListening = false;
+    let animId;
+
+    let redThreshold = 45; // Valor definido pelo Chefe
+    const dbValueDisplay = document.getElementById('dbValue');
+    const thresholdValDisplay = document.getElementById('thresholdVal');
+    const startBtn = document.getElementById('startBtn');
+
+    const lightRed = document.getElementById('lightRed');
+    const lightYellow = document.getElementById('lightYellow');
+    const lightGreen = document.getElementById('lightGreen');
+
+    function updateThreshold(val) {
+      redThreshold = parseInt(val, 10);
+      thresholdValDisplay.textContent = redThreshold + " dB";
+    }
+
+    async function toggleMic() {
+      if (isListening) {
+        stopMic();
+      } else {
+        await startMic();
+      }
+    }
+
+    async function startMic() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        microphone = audioContext.createMediaStreamSource(stream);
+
+        analyser.fftSize = 512;
+        microphone.connect(analyser);
+
+        isListening = true;
+        startBtn.textContent = "DESATIVAR MICROFONE";
+        startBtn.classList.add('stop');
+
+        processAudio();
+      } catch (err) {
+        alert("Erro ao aceder ao microfone: Permissão negada ou hardware indisponível.");
+        console.error(err);
+      }
+    }
+
+    function stopMic() {
+      if (audioContext) audioContext.close();
+      cancelAnimationFrame(animId);
+      isListening = false;
+      
+      startBtn.textContent = "ATIVAR MICROFONE";
+      startBtn.classList.remove('stop');
+      dbValueDisplay.textContent = "--";
+      
+      // Apaga todas as luzes
+      setLight('none');
+    }
+
+    function processAudio() {
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      function analyze() {
+        if (!isListening) return;
+
+        analyser.getByteFrequencyData(dataArray);
+
+        // Cálculo do valor RMS (Root Mean Square) da amplitude
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          sum += dataArray[i] * dataArray[i];
+        }
+        let rms = Math.sqrt(sum / dataArray.length);
+
+        // Conversão relativa para uma escala aproximada em Decibéis (dB SPL)
+        // Calibração ajustada para ambiente típico de sala de aula com microfone de portátil
+        let db = Math.round(20 * Math.log10(rms || 1) + 15);
+        db = Math.max(20, Math.min(100, db)); // Limita entre 20dB e 100dB
+
+        dbValueDisplay.textContent = db;
+
+        // Lógica de Sinalização do Semáforo
+        const yellowThreshold = redThreshold - 8; // Amarelo surge 8 dB antes do limite vermelho
+
+        if (db >= redThreshold) {
+          setLight('red');
+        } else if (db >= yellowThreshold) {
+          setLight('yellow');
+        } else {
+          setLight('green');
+        }
+
+        animId = requestAnimationFrame(analyze);
+      }
+
+      analyze();
+    }
+
+    function setLight(color) {
+      lightRed.classList.remove('active');
+      lightYellow.classList.remove('active');
+      lightGreen.classList.remove('active');
+
+      if (color === 'red') lightRed.classList.add('active');
+      if (color === 'yellow') lightYellow.classList.add('active');
+      if (color === 'green') lightGreen.classList.add('active');
+    }
+  </script>
+</body>
+</html>
