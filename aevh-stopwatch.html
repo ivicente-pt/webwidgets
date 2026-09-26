@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temporizador de Sala de Aula - AE Verde Horizonte</title>
+  <!-- Importação da fonte Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #00e676; /* Verde néon de alto contraste */
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .timer-container {
+      text-align: center;
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
+    }
+    .time-display {
+      font-size: clamp(6rem, 20vw, 16rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -2px;
+      margin-bottom: 25px;
+      user-select: none;
+      text-shadow: 0 4px 20px rgba(0, 230, 118, 0.15);
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #f0fdf4;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    button:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .btn-adjust {
+      background: #ffffff;
+      border-color: #81c784;
+      color: #2e7d32;
+      font-weight: 800;
+      padding: 10px 18px;
+    }
+    .presets {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-preset {
+      background: transparent;
+      border: 1px solid #c8e6c9;
+      color: #4caf50;
+      font-size: 0.95rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+    .btn-preset:hover {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border-color: #81c784;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="timer-container">
+    <div class="time-display" id="display">15:00</div>
+    
+    <!-- Controlos principais e de ajuste fino -->
+    <div class="controls">
+      <button class="btn-adjust" onclick="adjustTime(-60)" title="Subtrair 1 minuto">-1m</button>
+      <button id="startBtn" onclick="toggleTimer()">Início</button>
+      <button onclick="resetTimer()">Reiniciar</button>
+      <button class="btn-adjust" onclick="adjustTime(60)" title="Adicionar 1 minuto">+1m</button>
+    </div>
+
+    <!-- Atalhos de tempo predefinido -->
+    <div class="presets">
+      <button class="btn-preset" onclick="setCustomMinutes(1)">1m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(2)">2m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(5)">5m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(10)">10m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(15)">15m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(20)">20m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(25)">25m</button>
+      <button class="btn-preset" onclick="setCustomMinutes(30)">30m</button>
+    </div>
+  </div>
+
+  <script>
+    let totalSeconds = 900; // Default: 15 minutos
+    let initialSeconds = 900;
+    let timerInterval = null;
+    let isRunning = false;
+
+    const display = document.getElementById('display');
+    const startBtn = document.getElementById('startBtn');
+
+    function initFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mins = urlParams.get('m') || urlParams.get('min');
+      const secs = urlParams.get('s') || urlParams.get('sec');
+
+      if (secs) {
+        initialSeconds = parseInt(secs, 10);
+      } else if (mins) {
+        initialSeconds = parseInt(mins, 10) * 60;
+      }
+
+      totalSeconds = initialSeconds;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      display.textContent = 
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (totalSeconds <= 0) return;
+      isRunning = true;
+      startBtn.textContent = 'Pausa';
+      timerInterval = setInterval(() => {
+        totalSeconds--;
+        updateDisplay();
+        if (totalSeconds <= 0) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = 'Início';
+          display.style.color = '#ff1744'; // Vermelho ao finalizar
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      isRunning = false;
+      clearInterval(timerInterval);
+      startBtn.textContent = 'Continuar';
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      totalSeconds = initialSeconds;
+      display.style.color = '#00e676';
+      startBtn.textContent = 'Início';
+      updateDisplay();
+    }
+
+    function setCustomMinutes(mins) {
+      initialSeconds = mins * 60;
+      resetTimer();
+    }
+
+    function adjustTime(secondsToAdd) {
+      totalSeconds = Math.max(0, totalSeconds + secondsToAdd);
+      if (!isRunning) {
+        initialSeconds = totalSeconds;
+      }
+      display.style.color = '#00e676';
+      updateDisplay();
+    }
+
+    initFromURL();
+  </script>
+</body>
+</html>
