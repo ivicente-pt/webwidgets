@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Grupos - AE Verde Horizonte</title>
+  <!-- Importação da fonte Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #ffffff;
+      color: #212121;
+      font-family: 'Lexend', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px 20px 20px;
+    }
+    .widget-container {
+      display: flex;
+      flex-direction: row;
+      gap: 30px;
+      align-items: flex-start;
+      justify-content: center;
+      max-width: 1200px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    
+    /* Painel de Entrada de Dados */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 340px;
+      max-width: 100%;
+      background: #f8fafc;
+      padding: 24px;
+      border-radius: 20px;
+      border: 3px solid #00e676;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1e293b;
+    }
+
+    textarea {
+      width: 100%;
+      height: 220px;
+      padding: 12px;
+      border: 2px solid #00e676;
+      border-radius: 12px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 0.95rem;
+      color: #1b5e20;
+      background: #ffffff;
+      outline: none;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      border-color: #00a854;
+      box-shadow: 0 0 8px rgba(0, 230, 118, 0.4);
+    }
+
+    .config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 15px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .radio-group label {
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1e293b;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: #00e676;
+    }
+
+    button {
+      background: #f0fdf4;
+      color: #00a854;
+      border: 2px solid #00e676;
+      font-family: 'Lexend', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      margin-top: 5px;
+    }
+
+    button:hover {
+      background: #00e676;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+    }
+
+    /* Área de Exibição dos Grupos */
+    .groups-display {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      min-width: 320px;
+      align-items: flex-start;
+    }
+
+    .group-card {
+      background: #ffffff;
+      border: 3px solid #00e676;
+      border-radius: 16px;
+      padding: 18px;
+      flex: 1;
+      min-width: 240px;
+      max-width: 360px;
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.1);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .group-header {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #00a854;
+      border-bottom: 2px solid #f0fdf4;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .group-count {
+      font-size: 0.85rem;
+      background: #f0fdf4;
+      color: #00a854;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid #00e676;
+    }
+
+    .member-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .member-item {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #334155;
+      padding: 6px 10px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #00e676;
+    }
+
+    .empty-state {
+      width: 100%;
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="widget-container">
+    
+    <!-- Painel Lateral de Entrada -->
+    <div class="sidebar">
+      <label for="namesInput">Lista de Alunos (um por linha):</label>
+      <textarea id="namesInput" placeholder="Cole a lista da caderneta aqui..."></textarea>
+      
+      <div class="config-group">
+        <label>Modo de Divisão:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="splitMode" value="numGroups" checked onchange="updateModeLabel()"> Nº de Grupos</label>
+          <label><input type="radio" name="splitMode" value="groupSize" onchange="updateModeLabel()"> Alunos p/ Grupo</label>
+        </div>
+      </div>
+
+      <div class="config-group">
+        <label id="numberInputLabel" for="numberValue">Número de Grupos:</label>
+        <input type="number" id="numberValue" min="1" max="30" value="4">
+      </div>
+
+      <button onclick="generateGroups()">GERAR GRUPOS</button>
+    </div>
+
+    <!-- Área Principal de Exibição -->
+    <div class="groups-display" id="groupsContainer">
+      <div class="empty-state">
+        Insira a lista e clique em "GERAR GRUPOS" para distribuir a turma.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const defaultNames = [
+      "Ana Silva", "Bernardo Costa", "Carla Santos", "Diogo Ferreira", 
+      "Elena Rocha", "Filipe Martins", "Inês Henriques", "João Oliveira",
+      "Luís Mendes", "Marta Ribeiro", "Nuno Gaspar", "Oksana Cruz",
+      "Pedro Alves", "Rita Fonseca", "Sofia Neves", "Tiago Cardoso"
+    ];
+    
+    document.getElementById('namesInput').value = defaultNames.join('\n');
+
+    function updateModeLabel() {
+      const mode = document.querySelector('input[name="splitMode"]:checked').value;
+      const label = document.getElementById('numberInputLabel');
+      const input = document.getElementById('numberValue');
+
+      if (mode === 'numGroups') {
+        label.textContent = "Número de Grupos:";
+        input.value = 4;
+      } else {
+        label.textContent = "Alunos por Grupo:";
+        input.value = 4;
+      }
+    }
+
+    function generateGroups() {
+      const text = document.getElementById('namesInput').value.trim();
+      const rawNames = text ? text.split('\n').map(n => n.trim()).filter(n => n.length > 0) : [];
+      const container = document.getElementById('groupsContainer');
+
+      if (rawNames.length === 0) {
+        container.innerHTML = '<div class="empty-state">Insira pelo menos um nome para gerar grupos.</div>';
+        return;
+      }
+
+      // Algoritmo de baralhamento de Fisher-Yates (aleatoriedade pura sem vício)
+      const shuffled = [...rawNames];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      const mode = document.querySelector('input[name="splitMode"]:checked').value;
+      const val = parseInt(document.getElementById('numberValue').value, 10) || 1;
+
+      let groups = [];
+
+      if (mode === 'numGroups') {
+        const numGroups = Math.max(1, Math.min(val, shuffled.length));
+        for (let i = 0; i < numGroups; i++) groups.push([]);
+        
+        // Distribui um a um para garantir equilíbrio perfeito de efetivo
+        shuffled.forEach((student, index) => {
+          groups[index % numGroups].push(student);
+        });
+      } else {
+        const groupSize = Math.max(1, val);
+        for (let i = 0; i < shuffled.length; i += groupSize) {
+          groups.push(shuffled.slice(i, i + groupSize));
+        }
+      }
+
+      // Renderização no ecrã
+      container.innerHTML = '';
+      groups.forEach((group, idx) => {
+        const card = document.createElement('div');
+        card.className = 'group-card';
+        card.innerHTML = `
+          <div class="group-header">
+            <span>Grupo ${idx + 1}</span>
+            <span class="group-count">${group.length} alunos</span>
+          </div>
+          <ul class="member-list">
+            ${group.map(student => `<li class="member-item">${student}</li>`).join('')}
+          </ul>
+        `;
+        container.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
