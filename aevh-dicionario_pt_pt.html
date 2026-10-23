@@ -172,6 +172,13 @@
       background-color: #eff6ff;
     }
 
+    .audio-notice {
+      font-size: 0.75rem;
+      color: #b91c1c;
+      margin-top: 6px;
+      display: none;
+    }
+
     .meaning-block {
       margin-top: 16px;
       background-color: #f1f5f9;
@@ -239,6 +246,19 @@
 </div>
 
 <script>
+  let availableVoices = [];
+
+  function loadVoices() {
+    if ('speechSynthesis' in window) {
+      availableVoices = window.speechSynthesis.getVoices();
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+  }
+
   function handleKeyPress(e) {
     if (e.key === 'Enter') searchWord();
   }
@@ -252,18 +272,9 @@
     resultsArea.innerHTML = `<div class="loading-spinner">A consultar bases de dados...</div>`;
 
     try {
-      // 1ª Tentativa: Wiktionary API
       let data = await fetchFromWiktionary(term);
-      
-      // 2ª Tentativa: Dicio REST API (Fallback)
-      if (!data) {
-        data = await fetchFromDicio(term);
-      }
-
-      // 3ª Tentativa: Fallback Local Estruturado
-      if (!data) {
-        data = generateLocalFallback(term);
-      }
+      if (!data) data = await fetchFromDicio(term);
+      if (!data) data = generateLocalFallback(term);
 
       renderResults(data);
     } catch (err) {
@@ -321,10 +332,13 @@
     resultsArea.innerHTML = `
       <div class="word-header">
         <div class="word-title">${data.word}</div>
-        <button class="audio-btn" onclick="speakWord('${data.word}')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-          Ouvir (PT)
-        </button>
+        <div>
+          <button class="audio-btn" onclick="speakWord('${data.word}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            Ouvir (PT-PT)
+          </button>
+          <div id="audioNotice" class="audio-notice">Voz PT-PT não instalada no sistema.</div>
+        </div>
       </div>
       <div class="meaning-block">
         <div class="part-speech">${data.partOfSpeech}</div>
@@ -334,10 +348,34 @@
   }
 
   function speakWord(word) {
-    if ('speechSynthesis' in window) {
+    const notice = document.getElementById('audioNotice');
+    if (notice) notice.style.display = 'none';
+
+    if (!('speechSynthesis' in window)) return;
+
+    if (availableVoices.length === 0) {
+      availableVoices = window.speechSynthesis.getVoices();
+    }
+
+    // Procura rigorosa por vozes europeias (PT-PT)
+    const ptPtVoice = availableVoices.find(v => 
+      (v.lang === 'pt-PT' || v.lang === 'pt_PT') && !v.name.toLowerCase().includes('brazil')
+    ) || availableVoices.find(v => 
+      v.lang.startsWith('pt') && (v.name.includes('Portugal') || v.name.includes('European'))
+    );
+
+    if (ptPtVoice) {
+      window.speechSynthesis.cancel(); // Parar pronúncias anteriores
       const utterance = new SpeechSynthesisUtterance(word);
+      utterance.voice = ptPtVoice;
       utterance.lang = 'pt-PT';
       window.speechSynthesis.speak(utterance);
+    } else {
+      // Se não houver voz PT-PT nativa, bloqueia o fallback brasileiro
+      if (notice) {
+        notice.innerText = "Voz de PT-PT indisponível no dispositivo.";
+        notice.style.display = 'block';
+      }
     }
   }
 </script>
