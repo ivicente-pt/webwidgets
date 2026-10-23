@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dictionnaire Français</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .dictionary-box {
+      width: 100%;
+      max-width: 500px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: #059669;
+    }
+
+    .search-btn {
+      background-color: #059669;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .search-btn:hover {
+      background-color: #047857;
+    }
+
+    .results {
+      margin-top: 20px;
+    }
+
+    .word-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: #eff6ff;
+      color: #2563eb;
+    }
+
+    .definition-list {
+      margin-top: 10px;
+      padding-left: 18px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #334155;
+    }
+
+    .definition-list li {
+      margin-bottom: 6px;
+    }
+
+    .status-msg {
+      font-size: 0.9rem;
+      color: #64748b;
+      text-align: center;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dictionary-box">
+  <form class="search-form" onsubmit="event.preventDefault(); executeSearch();">
+    <input type="text" id="term" class="search-input" placeholder="Écrivez un mot..." required autocomplete="off">
+    <button type="submit" class="search-btn">Chercher</button>
+  </form>
+
+  <div id="output" class="results"></div>
+</div>
+
+<script>
+  async function executeSearch() {
+    const termInput = document.getElementById('term');
+    const output = document.getElementById('output');
+    const word = termInput.value.trim().toLowerCase();
+
+    if (!word) return;
+
+    output.innerHTML = `<div class="status-msg">Recherche en cours...</div>`;
+
+    try {
+      const url = `https://fr.wiktionary.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(word)}&format=json&origin=*`;
+      const response = await fetch(url);
+      const data = await response.json();
+      const pages = data.query.pages;
+      const pageId = Object.keys(pages)[0];
+
+      if (pageId === "-1") {
+        output.innerHTML = `<div class="status-msg">Aucune définition trouvée pour "${word}".</div>`;
+        return;
+      }
+
+      const extract = pages[pageId].extract;
+      if (!extract) {
+        output.innerHTML = `<div class="status-msg">Définition non disponible.</div>`;
+        return;
+      }
+
+      const lines = extract.split('\n').filter(l => l.trim().length > 0);
+      let pos = "Nom";
+      let defs = [];
+
+      for (let line of lines) {
+        if (line.startsWith('=')) continue;
+        const lLower = line.toLowerCase();
+        if (lLower.includes('nom commun') || lLower.includes('substantif')) pos = "Nom";
+        else if (lLower.includes('verbe')) pos = "Verbe";
+        else if (lLower.includes('adjectif')) pos = "Adjectif";
+        else if (lLower.includes('adverbe')) pos = "Adverbe";
+        else defs.push(line);
+      }
+
+      if (defs.length === 0) defs.push(extract.substring(0, 250) + "...");
+
+      output.innerHTML = `
+        <h2 style="font-size: 1.4rem; color: #0f172a; text-transform: capitalize;">${word}</h2>
+        <div class="word-meta">
+          <span class="badge">${pos}</span>
+        </div>
+        <ol class="definition-list">
+          ${defs.slice(0, 3).map(d => `<li>${d}</li>`).join('')}
+        </ol>
+      `;
+
+    } catch (e) {
+      output.innerHTML = `<div class="status-msg">Erreur de connexion au dictionnaire.</div>`;
+    }
+  }
+</script>
+
+</body>
+</html>
